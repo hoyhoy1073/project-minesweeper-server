@@ -2,23 +2,23 @@ from flask import Flask,  request, jsonify, make_response
 from flask_cors import CORS
 from minesweeper import Minesweeper, MinesweeperAI
 import json
-
-import tictactoe as ttt
+import time
 
 app = Flask(__name__)
 # CORS(app, resources={r"/api/*": {"origins": "http://localhost:5173"}})
-CORS(app, resources={r"/*": {"origins": "*"}})
+# CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-HEIGHT = None
-WIDTH = None
-game = None
+HEIGHT = 5
+WIDTH = 5
+game = 3
 ai = None
 revealed = set()
 flags = set()
 lost = False
 
-@app.route('/api/create-game')
-def create_game(height=5, width=5, mines=3):
+@app.route('/api/create-board')
+def create_board():
     if request.method == "OPTIONS":
         return _build_cors_preflight_response()
     elif request.method == "GET":
@@ -26,16 +26,19 @@ def create_game(height=5, width=5, mines=3):
         global ai
         global HEIGHT
         global WIDTH
-        HEIGHT = height
-        WIDTH = width
+        # data = request.json
+        # height = data.get("height")
+        height =  int(request.args.get("height"))
+        width = int(request.args.get("width"))
+        mines = int(request.args.get("mines"))
 
         game = Minesweeper(height, width, mines)
         ai = MinesweeperAI(height, width)
         time.sleep(0.2)
-        return _corsify_actual_response(jsonify({ "data": None, "status": "success" }))
+        return _corsify_actual_response(jsonify({ "data": None, "status": "success" })) 
 
 @app.route('/api/reset')
-def create_game():
+def reset():
     if request.method == "OPTIONS":
         return _build_cors_preflight_response()
     elif request.method == "GET":
