@@ -17,8 +17,8 @@ revealed = set()
 flags = set()
 lost = False
 
-@app.route('/api/create-board')
-def create_board():
+@app.route('/api/setup-board')
+def setup_board():
     if request.method == "OPTIONS":
         return _build_cors_preflight_response()
     elif request.method == "GET":
@@ -26,14 +26,21 @@ def create_board():
         global ai
         global HEIGHT
         global WIDTH
-        # data = request.json
-        # height = data.get("height")
-        height =  int(request.args.get("height"))
+        height = int(request.args.get("height"))
         width = int(request.args.get("width"))
-        mines = int(request.args.get("mines"))
+        mines = eval(request.args.get("mines"))
 
-        game = Minesweeper(height, width, mines)
+        # print("Height: ", height)
+        # print("Width: ", width)
+        # print("Mines: ", mines)
+
+        game = Minesweeper(height, width, 0)
         ai = MinesweeperAI(height, width)
+
+        for mine in mines:
+            r, c = list(mine.split('-'))
+            game.mines.add((int(r), int(c)))
+
         time.sleep(0.2)
         return _corsify_actual_response(jsonify({ "data": None, "status": "success" })) 
 
@@ -69,7 +76,6 @@ def create_game(cell):
 
         time.sleep(0.2)
         return _corsify_actual_response(jsonify({ "data": None, "status": "success" }))
-
 
 @app.route('/api/play/ai')
 def calculate_ai_move():
