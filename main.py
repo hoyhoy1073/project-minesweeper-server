@@ -78,7 +78,7 @@ def create_game():
             flags.add(cell)
 
         time.sleep(0.2)
-        return _corsify_actual_response(jsonify({ "data": None, "status": "success" }))
+        return _corsify_actual_response(jsonify({ "data": "completed", "status": "success" }))
 
 @app.route('/api/play/ai')
 def calculate_ai_move():
@@ -110,7 +110,7 @@ def calculate_ai_move():
             nearby = game.nearby_mines(move)
             revealed.add(move)
             ai.add_knowledge(move, nearby)
-            return return _corsify_actual_response(jsonify({ "data": "completed", "status": "success" }))
+            return _corsify_actual_response(jsonify({ "data": "completed", "status": "success" }))
 
         flags = ai.mines.copy()
         print("No moves left to make.")
@@ -118,23 +118,41 @@ def calculate_ai_move():
 
 
 @app.route('/api/play/user')
-def calculate_user_move(cell):
+def calculate_user_move():
     if request.method == "OPTIONS":
         return _build_cors_preflight_response()
     elif request.method == "GET":
-        if (cell not in flags and cell not in revealed):
-            move = request.args.get("move")
-            count = request.args.get("adjacentMines")
-            r, c = list(move.split('-'))
-            cell = (int(r), int(c))
-            if (game.is_mine(cell)):
-                time.sleep(0.2)
-                return _corsify_actual_response(jsonify({ "data": "lost", "status": "success" }))
+        cells = eval(request.args.get("cells"))
+        adjacent_mines_array = eval(request.args.get("adjacentMines"))
 
-            ai.add_knowledge(cell, count)
-            return _corsify_actual_response(jsonify({ "data": "completed", "status": "success" }))
+        print("Cells: ", cells)
+        print("Adjacent mines: ", adjacent_mines_array)
+
+        for i in range(len(cells)):
+            cell = cells[i]
+            adjacent_mines = adjacent_mines_array[i]
+
+            if (cell not in flags and cell not in revealed):
+                r, c = list(cell.split('-'))
+                if (game.is_mine((int(r), int(c)))):
+                    time.sleep(0.2)
+                    return _corsify_actual_response(jsonify({ "data": "lost", "status": "success" }))
+
+                ai.add_knowledge((int(r), int(c)), adjacent_mines)
+                return _corsify_actual_response(jsonify({ "data": "completed", "status": "success" }))
+
+            return _corsify_actual_response(jsonify({ "data": "not completed", "status": "success" }))
+
+            # r, c = list(move.split('-'))
+            # cell = (int(r), int(c))
+            # if (game.is_mine(cell)):
+            #     time.sleep(0.2)
+            #     return _corsify_actual_response(jsonify({ "data": "lost", "status": "success" }))
+
+            # ai.add_knowledge(cell, count)
+            # return _corsify_actual_response(jsonify({ "data": "completed", "status": "success" }))
         
-        return _corsify_actual_response(jsonify({ "data": "", "status": "success" }))
+        return _corsify_actual_response(jsonify({ "data": "not completed", "status": "success" }))
 
 
 def _build_cors_preflight_response():
