@@ -16,6 +16,26 @@ lost = False
 revealed = set()
 flags = set()
 
+# def revealCell(cell):
+#     if (cell in revealed or cell in flags):
+#         return
+         
+#     if (game.is_mine(cell)):
+#         for row in game.board:
+#             for c in row:
+#                 if (game.is_mine(c)):
+#                     revealed.add(c)
+#         return
+
+#     def revealCells(r, c):
+#         if (r < 0 or r >= game.height or c < 0 or c >= game.width or (r, c) in revealed):
+#             return
+
+#         revealed.add((r, c))
+
+#         if ()
+
+
 @app.route('/api/setup-board')
 def setup_board():
     if request.method == "OPTIONS":
@@ -68,32 +88,31 @@ def flag():
     elif request.method == "GET":
         global flags
 
-        move = request.args.get("move")
+        cell = request.args.get("cell")
         r, c = list(move.split('-'))
-        cell = (int(r), int(c))
+        flagged_cell = (int(r), int(c))
 
-        if (cell in flags):
-            flags.remove(cell)
+        if (flagged_cell in flags):
+            flags.remove(flagged_cell)
         else:
-            flags.add(cell)
+            flags.add(flagged_cell)
 
         time.sleep(0.2)
-        return _corsify_actual_response(jsonify({ "data": "completed", "status": "success" }))
+        return _corsify_actual_response(jsonify({ "data": None, "status": "success" }))
 
-@app.route('/api/add-knowledge')
-def add_knowledge():
-    if request.method == "OPTIONS":
-        return _build_cors_preflight_response()
-    elif request.method == "GET":
-        cells = eval(request.args.get("cells"))
-        for cell in cells:
-            r, c = list(cell.split('-'))
-            cell = (int(r), int(c))
-            nearby = game.nearby_mines(cell)
-            revealed.add(cell)
-            ai.add_knowledge(cell, nearby)
-        
-        return _corsify_actual_response(jsonify({ "data": "completed", "status": "success" }))
+# @app.route('/api/add-knowledge')
+# def add_knowledge():
+#     if request.method == "OPTIONS":
+#         return _build_cors_preflight_response()
+#     elif request.method == "GET":
+#         cells = eval(request.args.get("cells"))
+#         for cell in cells:
+#             r, c = list(cell.split('-'))
+#             cell = (int(r), int(c))
+#             nearby = game.nearby_mines(cell)
+#             revealed.add(cell)
+#             ai.add_knowledge(cell, nearby)
+#         return _corsify_actual_response(jsonify({ "data": "completed", "status": "success" }))
 
 @app.route('/api/play/ai')
 def calculate_ai_move():
@@ -105,31 +124,38 @@ def calculate_ai_move():
         global flags
         global revealed
 
-        move = ai.make_safe_move()
-        if move:
-            time.sleep(0.2)
+        def process_move(move):
             if (game.is_mine(move)):
-                return _corsify_actual_response(jsonify({ "data": "lost", "status": "failed" }))
+                time.sleep(0.2)
+                return _corsify_actual_response(jsonify({ "data": None, "status": "failed" }))
 
             nearby = game.nearby_mines(move)
             revealed.add(move)
             ai.add_knowledge(move, nearby)
-            return _corsify_actual_response(jsonify({ "data": str(move[0]) + "-" + str(move[1]), "status": "success" }))
+
+            print("Safe cells: ", ai.safes)
+
+            for cell in ai.safes:
+                if (cell not in revealed):
+                    revealed.add(cell)
+
+            time.sleep(0.2)
+            # return _corsify_actual_response(jsonify({ "data": str(move[0]) + "-" + str(move[1]), "status": "success" }))
+            return _corsify_actual_response(jsonify({ "data": list(revealed), "status": "success" }))
+
+        move = ai.make_safe_move()
+        if move:
+            return process_move(move)
 
         move = ai.make_random_move()
         if move:
-            time.sleep(0.2)
-            if (game.is_mine(move)):
-                return _corsify_actual_response(jsonify({ "data": "lost", "status": "failed" }))
+            return process_move(move)
 
-            nearby = game.nearby_mines(move)
-            revealed.add(move)
-            ai.add_knowledge(move, nearby)
-            return _corsify_actual_response(jsonify({ "data": str(move[0]) + "-" + str(move[1]), "status": "success" }))
-
+        # The AI couldn't make a safe move nor a random move
         flags = ai.mines.copy()
-        print("No moves left to make.")
-        return _corsify_actual_response(jsonify({ "data": "not completed", "status": "failed" }))
+        # print("No moves left to make.")
+        time.sleep(0.2)
+        return _corsify_actual_response(jsonify({ "data": None, "status": "failed" }))
 
 
 @app.route('/api/play/user')
@@ -137,26 +163,21 @@ def calculate_user_move():
     if request.method == "OPTIONS":
         return _build_cors_preflight_response()
     elif request.method == "GET":
-        cells = eval(request.args.get("cells"))
-        adjacent_mines_array = eval(request.args.get("adjacentMines"))
+        move = request.args.get("move")
+        r, c = list(move.split('-'))
+        cell = (int(r), int(c))
+        if (game.is_mine(cell)):
+            time.sleep(0.2)
+            return _corsify_actual_response(jsonify({ "data": None, "status": "failed" }))
 
-        for i in range(len(cells)):
-            cell = cells[i]
-            adjacent_mines = adjacent_mines_array[i]
-
-            if (cell not in flags and cell not in revealed):
-                r, c = list(cell.split('-'))
-                if (game.is_mine((int(r), int(c)))):
-                    time.sleep(0.2)
-                    return _corsify_actual_response(jsonify({ "data": "lost", "status": "success" }))
-
-                ai.add_knowledge((int(r), int(c)), adjacent_mines)
-                return _corsify_actual_response(jsonify({ "data": "completed", "status": "success" }))
-
-            return _corsify_actual_response(jsonify({ "data": "not completed", "status": "success" }))
-
-        return _corsify_actual_response(jsonify({ "data": "not completed", "status": "success" }))
-
+        nearby = game.nearby_mines(cell)
+        revealed.add(cell)
+        ai.add_knowledge(cell, nearby)
+        for cell in ai.safes:
+            if (cell not in revealed):
+                revealed.add(cell)
+        time.sleep(0.2)
+        return _corsify_actual_response(jsonify({ "data": list(revealed), "status": "success" }))
 
 def _build_cors_preflight_response():
     response = make_response()
