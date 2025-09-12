@@ -132,25 +132,26 @@ def calculate_ai_move():
             nearby = game.nearby_mines(move)
             revealed.add(move)
             ai.add_knowledge(move, nearby)
-
-            print("Safe cells: ", ai.safes)
-
-            for cell in ai.safes:
-                if (cell not in revealed):
+            adjacent_cells = ai.calculate_neighbors(move)
+            for cell in adjacent_cells:
+                if (game.nearby_mines(cell) == 0 and cell not in revealed):
                     revealed.add(cell)
 
             time.sleep(0.2)
             # return _corsify_actual_response(jsonify({ "data": str(move[0]) + "-" + str(move[1]), "status": "success" }))
             return _corsify_actual_response(jsonify({ "data": list(revealed), "status": "success" }))
 
-        move = ai.make_safe_move()
+        move = ai.make_safe_move(game.mines)
         if move:
+            print("Ai making safe move: ", move)
             return process_move(move)
 
-        move = ai.make_random_move()
+        move = ai.make_random_move(game.mines)
         if move:
+            print("Ai making random move: ", move)
             return process_move(move)
 
+        print("No moves left to make.")
         # The AI couldn't make a safe move nor a random move
         flags = ai.mines.copy()
         # print("No moves left to make.")
@@ -173,8 +174,9 @@ def calculate_user_move():
         nearby = game.nearby_mines(cell)
         revealed.add(cell)
         ai.add_knowledge(cell, nearby)
-        for cell in ai.safes:
-            if (cell not in revealed):
+        adjacent_cells = ai.calculate_neighbors(move)
+        for cell in adjacent_cells:
+            if (game.nearby_mines(cell) == 0 and cell not in revealed):
                 revealed.add(cell)
         time.sleep(0.2)
         return _corsify_actual_response(jsonify({ "data": list(revealed), "status": "success" }))

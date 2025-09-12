@@ -325,7 +325,7 @@ class MinesweeperAI():
 
         return Sentence(newCells, count)
 
-    def make_safe_move(self):
+    def make_safe_move(self, mines):
         """
         Returns a safe cell to choose on the Minesweeper board.
         The move must be known to be safe, and not already a move
@@ -336,14 +336,46 @@ class MinesweeperAI():
         """
         move = None
 
+        # for safe_move in self.safes:
+        #     if (safe_move not in self.moves_made):
+        #         move = safe_move
+        #         break
+        
+        # return move
+
+        # available_moves = []
+        # for i in range(self.height):
+        #     for j in range(self.width):
+        #         # move = (i, j)
+        #         # neighbors = self.calculate_neighbors(move)
+        #         # for cell in neighbors:
+        #         #     if cell in self.safes or cell not in mines:
+        #         #         available_moves.append(move)
+        #         move = (i, j)
+        #         if (move in self.safes):
+        #             avaible
+
+        # random_move = random.sample(available_moves, 1)
+        # if (len(random_move) > 0):
+        #     return random_move[0]
+
+        # return None
+
+        available_moves = []
         for safe_move in self.safes:
             if (safe_move not in self.moves_made):
-                move = safe_move
-                break
+                available_moves.append(safe_move)
         
-        return move
+        if (len(available_moves) > 0):
+            random_move = random.sample(available_moves, 1)
+            if (len(random_move) > 0):
+                return random_move[0]
+        
+        return None
+
+
      
-    def make_random_move(self):
+    def make_random_move(self, mines):
         """
         Returns a move to make on the Minesweeper board.
         Should choose randomly among cells that:
@@ -353,16 +385,19 @@ class MinesweeperAI():
         def calculate_manhattan_distances(source, heap):
             for i in range(self.height):
                 for j in range(self.width):
-                    distance = abs(i - source[0]) + abs(j - source[1])
-                    heapq.heappush(heap, ((-1) * distance, (i, j)))
+                    if ((i, j) not in mines and (i, j) not in self.mines and (i, j) not in self.moves_made):
+                        distance = abs(i - source[0]) + abs(j - source[1])
+                        heapq.heappush(heap, ((-1) * distance, (i, j)))
 
         def calculate_farthest_possible_move(heap):
-            move = heap[0][1]
-            heapq.heappop(heap)
-            while (move in self.moves_made or move in self.mines):
-                move = heap[0][1]
-                heapq.heappop(heap)
+            # move = heap[0][1]
+            # heapq.heappop(heap)
+            # while (move in self.moves_made or move in self.mines):
+            #     move = heap[0][1]
+            #     heapq.heappop(heap)
 
+            # return move
+            move = heap[0][1]
             return move
 
         distances = []
@@ -372,13 +407,25 @@ class MinesweeperAI():
             calculate_manhattan_distances(mine, distances)
         
         if (len(distances) > 0):
-            return calculate_farthest_possible_move(distances)
+            move = calculate_farthest_possible_move(distances)
+            self.moves_made.add(move)
+            return move
         
         for cell in self.moves_made:
             calculate_manhattan_distances(cell, distances)
 
         if (len(distances) > 0):
-            return calculate_farthest_possible_move(distances)
+            move = calculate_farthest_possible_move(distances)
+            self.moves_made.add(move)
+            return move
+
+        for cell in mines:
+            calculate_manhattan_distances(cell, distances)
+
+        if (len(distances) > 0):
+            move = calculate_farthest_possible_move(distances)
+            self.moves_made.add(move)
+            return move
         
         available_moves = []
         for i in range(self.height):
