@@ -139,11 +139,9 @@ class Sentence():
         Updates internal knowledge representation given the fact that
         a cell is known to be safe.
         """
-
         if (cell in self.cells):
             self.safes.add(cell)
             self.cells.remove(cell)
-
 
 class MinesweeperAI():
     """
@@ -372,8 +370,6 @@ class MinesweeperAI():
                 return random_move[0]
         
         return None
-
-
      
     def make_random_move(self, mines):
         """
@@ -382,48 +378,46 @@ class MinesweeperAI():
             1) have not already been chosen, and
             2) are not known to be mines
         """
-        def calculate_manhattan_distances(source, heap):
+        # for mine in self.mines:
+        #     calculate_manhattan_distances(mine, distances)
+
+        # if (len(distances) > 0):
+        #     move = calculate_farthest_possible_move(distances)
+        #     self.moves_made.add(move)
+        #     return move
+        
+        # for cell in self.moves_made:
+        #     calculate_manhattan_distances(cell, distances)
+
+        # if (len(distances) > 0):
+        #     move = calculate_farthest_possible_move(distances)
+        #     self.moves_made.add(move)
+        #     return move
+
+        # for cell in mines:
+        #     calculate_manhattan_distances(cell, distances)
+
+        # if (len(distances) > 0):
+        #     move = calculate_farthest_possible_move(distances)
+        #     self.moves_made.add(move)
+        #     return move
+
+        def calculate_manhattan_distances():
+            distances = []
+            heapq.heapify(distances)
+            centroids = mines.union(self.mines).union(self.moves_made)
             for i in range(self.height):
                 for j in range(self.width):
                     if ((i, j) not in mines and (i, j) not in self.mines and (i, j) not in self.moves_made):
-                        distance = abs(i - source[0]) + abs(j - source[1])
-                        heapq.heappush(heap, ((-1) * distance, (i, j)))
+                        for source in centroids:
+                            distance = abs(i - source[0]) + abs(j - source[1])
+                            heapq.heappush(distances, ((-1) * distance, (i, j)))
 
-        def calculate_farthest_possible_move(heap):
-            # move = heap[0][1]
-            # heapq.heappop(heap)
-            # while (move in self.moves_made or move in self.mines):
-            #     move = heap[0][1]
-            #     heapq.heappop(heap)
+            return distances
 
-            # return move
-            move = heap[0][1]
-            return move
-
-        distances = []
-        heapq.heapify(distances)
-
-        for mine in self.mines:
-            calculate_manhattan_distances(mine, distances)
-        
+        distances = calculate_manhattan_distances()
         if (len(distances) > 0):
-            move = calculate_farthest_possible_move(distances)
-            self.moves_made.add(move)
-            return move
-        
-        for cell in self.moves_made:
-            calculate_manhattan_distances(cell, distances)
-
-        if (len(distances) > 0):
-            move = calculate_farthest_possible_move(distances)
-            self.moves_made.add(move)
-            return move
-
-        for cell in mines:
-            calculate_manhattan_distances(cell, distances)
-
-        if (len(distances) > 0):
-            move = calculate_farthest_possible_move(distances)
+            move = heapq.heappop(distances)[1]
             self.moves_made.add(move)
             return move
         
@@ -436,6 +430,8 @@ class MinesweeperAI():
 
         random_move = random.sample(available_moves, 1)
         if (len(random_move) > 0):
-            return random_move[0]
+            move = random_move[0]
+            self.moves_made.add(move)
+            return move
         
         return None

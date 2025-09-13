@@ -58,6 +58,7 @@ def setup_board():
         for mine in mines:
             r, c = list(mine.split('-'))
             game.mines.add((int(r), int(c)))
+            game.board[int(r)][int(c)] = True
 
         time.sleep(0.2)
         return _corsify_actual_response(jsonify({ "data": None, "status": "success" })) 
@@ -134,12 +135,26 @@ def calculate_ai_move():
             ai.add_knowledge(move, nearby)
             adjacent_cells = ai.calculate_neighbors(move)
             for cell in adjacent_cells:
-                if (game.nearby_mines(cell) == 0 and cell not in revealed):
+                nearby = game.nearby_mines(cell)
+                if (nearby == 0 and cell not in revealed and cell not in ai.moves_made):
                     revealed.add(cell)
 
             time.sleep(0.2)
-            # return _corsify_actual_response(jsonify({ "data": str(move[0]) + "-" + str(move[1]), "status": "success" }))
             return _corsify_actual_response(jsonify({ "data": list(revealed), "status": "success" }))
+
+
+        adjacentMines = eval(request.args.get("adjacentMines"))
+        mines = eval(request.args.get("mines"))
+        for i in range(game.height):
+            for j in range(game.width):
+                # print("Cell: ", (i, j), ", adjacent mines: ", game.nearby_mines((i, j)))
+                nearby = game.nearby_mines((i, j))
+                if (adjacentMines[i][j] != nearby):
+                    nearby = game.nearby_mines((i, j))
+                    print("Cell: ", (i, j), " differs in nearby mine count in ui and server: ", adjacentMines[i][j], nearby)
+                    print("Mines in the ui: ", mines)
+                    print("Mines in the server: ", game.mines)
+                # assert(adjacentMines[i][j] == game.nearby_mines((i, j)))
 
         move = ai.make_safe_move(game.mines)
         if move:
@@ -176,7 +191,9 @@ def calculate_user_move():
         ai.add_knowledge(cell, nearby)
         adjacent_cells = ai.calculate_neighbors(move)
         for cell in adjacent_cells:
-            if (game.nearby_mines(cell) == 0 and cell not in revealed):
+            nearby = game.nearby_mines(cell)
+            print("Adjacent cell: ", cell, " of ", move, " has ", nearby, " number of mines in proximity.")
+            if (nearby == 0 and cell not in revealed and cell not in ai.moves_made):
                 revealed.add(cell)
         time.sleep(0.2)
         return _corsify_actual_response(jsonify({ "data": list(revealed), "status": "success" }))
