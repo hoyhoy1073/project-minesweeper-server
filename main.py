@@ -124,39 +124,62 @@ def calculate_ai_move():
         global ai
         global flags
         global revealed
+        global lost
+        
+        def reveal_cell(cell):
+            global lost
 
-        def process_move(move):
-            if (game.is_mine(move)):
-                time.sleep(0.2)
-                return _corsify_actual_response(jsonify({ "data": None, "status": "failed" }))
+            if (cell in revealed or cell in flags):
+                return
+            
+            if (game.is_mine(cell)):
+                for i in range(game.height):
+                    for j in range(game.width):
+                        if (game.is_mine):
+                            revealed.add((i, j))
+                lost = True
+                return
+            
+            def reveal_cells(r: int, c: int):
+                if (r < 0 or r >= game.height or c < 0 or c >= game.width or (r, c) in revealed):
+                    return
+                
+                revealed.add((r, c))
+                ai.moves_made.add((r, c))
+                if (game.nearby_mines((r, c)) == 0):
+                    for i in [-1, 0, 1]:
+                        for j in [-1, 0, 1]:
+                            reveal_cells(r + i, c + j)
 
-            nearby = game.nearby_mines(move)
-            revealed.add(move)
-            ai.add_knowledge(move, nearby)
-            adjacent_cells = ai.calculate_neighbors(move)
-            for cell in adjacent_cells:
-                nearby = game.nearby_mines(cell)
-                if (nearby == 0 and cell not in revealed and cell not in ai.moves_made):
-                    revealed.add(cell)
+            reveal_cells(cell[0], cell[1])
 
-            time.sleep(0.2)
-            return _corsify_actual_response(jsonify({ "data": list(revealed), "status": "success" }))
-
+        move_type = None
         move = ai.make_safe_move(game.mines)
-        if move:
+        if move == None:
+            move = ai.make_random_move(game.mines)
+            if move == None:
+                # The AI couldn't make a safe move nor a random move
+                print("No moves left to make.")
+                flags = ai.mines.copy()
+            else:
+                # The AI has made a random move
+                print("Ai making random move: ", move)
+                ai.add_knowledge(move, game.nearby_mines(move))
+                reveal_cell(move)
+                move_type = "random"
+        else:
+            # The AI has made a random move
             print("Ai making safe move: ", move)
-            return process_move(move)
+            ai.add_knowledge(move, game.nearby_mines(move))
+            reveal_cell(move)
+            move_type = "safe"
 
-        move = ai.make_random_move(game.mines)
-        if move:
-            print("Ai making random move: ", move)
-            return process_move(move)
-
-        # The AI couldn't make a safe move nor a random move
-        print("No moves left to make.")
-        flags = ai.mines.copy()
         time.sleep(0.2)
-        return _corsify_actual_response(jsonify({ "data": None, "status": "failed" }))
+        if (move_type == None):
+            return _corsify_actual_response(jsonify({ "data": None, "status": "failed" }))
+        
+        print("These cells are revealed: ", list(revealed))
+        return _corsify_actual_response(jsonify({ "data": list(revealed), "status": "success" }))
 
 
 @app.route('/api/play/user')
