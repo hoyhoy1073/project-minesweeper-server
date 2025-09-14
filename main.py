@@ -1,7 +1,6 @@
 from flask import Flask,  request, jsonify, make_response
-from flask_cors import CORS
 from minesweeper import Minesweeper, MinesweeperAI
-import json
+from flask_cors import CORS
 import time
 
 app = Flask(__name__)
@@ -35,7 +34,6 @@ flags = set()
 
 #         if ()
 
-
 @app.route('/api/setup-board')
 def setup_board():
     if request.method == "OPTIONS":
@@ -48,9 +46,11 @@ def setup_board():
         height = int(request.args.get("height"))
         width = int(request.args.get("width"))
         mines = eval(request.args.get("mines"))
+
+        print("Mines: ", mines)
+
         HEIGHT = height
         WIDTH = width
-        MINE_COUNT = len(mines)
 
         game = Minesweeper(height, width, 0)
         ai = MinesweeperAI(height, width)
@@ -90,7 +90,7 @@ def flag():
         global flags
 
         cell = request.args.get("cell")
-        r, c = list(move.split('-'))
+        r, c = list(cell.split('-'))
         flagged_cell = (int(r), int(c))
 
         if (flagged_cell in flags):
@@ -142,20 +142,6 @@ def calculate_ai_move():
             time.sleep(0.2)
             return _corsify_actual_response(jsonify({ "data": list(revealed), "status": "success" }))
 
-
-        adjacentMines = eval(request.args.get("adjacentMines"))
-        mines = eval(request.args.get("mines"))
-        for i in range(game.height):
-            for j in range(game.width):
-                # print("Cell: ", (i, j), ", adjacent mines: ", game.nearby_mines((i, j)))
-                nearby = game.nearby_mines((i, j))
-                if (adjacentMines[i][j] != nearby):
-                    nearby = game.nearby_mines((i, j))
-                    print("Cell: ", (i, j), " differs in nearby mine count in ui and server: ", adjacentMines[i][j], nearby)
-                    print("Mines in the ui: ", mines)
-                    print("Mines in the server: ", game.mines)
-                # assert(adjacentMines[i][j] == game.nearby_mines((i, j)))
-
         move = ai.make_safe_move(game.mines)
         if move:
             print("Ai making safe move: ", move)
@@ -166,10 +152,9 @@ def calculate_ai_move():
             print("Ai making random move: ", move)
             return process_move(move)
 
-        print("No moves left to make.")
         # The AI couldn't make a safe move nor a random move
+        print("No moves left to make.")
         flags = ai.mines.copy()
-        # print("No moves left to make.")
         time.sleep(0.2)
         return _corsify_actual_response(jsonify({ "data": None, "status": "failed" }))
 
@@ -192,7 +177,6 @@ def calculate_user_move():
         adjacent_cells = ai.calculate_neighbors(move)
         for cell in adjacent_cells:
             nearby = game.nearby_mines(cell)
-            print("Adjacent cell: ", cell, " of ", move, " has ", nearby, " number of mines in proximity.")
             if (nearby == 0 and cell not in revealed and cell not in ai.moves_made):
                 revealed.add(cell)
         time.sleep(0.2)
