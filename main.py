@@ -41,14 +41,18 @@ def setup_board():
     elif request.method == "GET":
         global game
         global ai
+        global lost
+        global revealed
+        global flags
         global HEIGHT
         global WIDTH
+
+        lost = False
+        revealed = set()
+        flags = set()
         height = int(request.args.get("height"))
         width = int(request.args.get("width"))
         mines = eval(request.args.get("mines"))
-
-        print("Mines: ", mines)
-
         HEIGHT = height
         WIDTH = width
 
