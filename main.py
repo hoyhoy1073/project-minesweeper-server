@@ -136,6 +136,11 @@ def calculate_ai_move():
                 reveal_cell(move)
                 move_type = "random"
         else:
+            if (game.is_mine(move)):
+                reveal_cell(move)
+                time.sleep(0.2)
+                return _corsify_actual_response(jsonify({ "data": None, "status": "lost" }))                
+
             # The AI has made a random move
             print("Ai making safe move: ", move)
             ai.add_knowledge(move, game.nearby_mines(move))
@@ -143,8 +148,8 @@ def calculate_ai_move():
             move_type = "safe"
 
         time.sleep(0.2)
-        if (move_type == None):
-            return _corsify_actual_response(jsonify({ "data": None, "status": "failed" }))
+        if (len(revealed) == (game.height * game.width - len(game.mines))):
+            return _corsify_actual_response(jsonify({ "data": list(revealed), "status": "won" }))
         
         print("These cells are revealed: ", list(revealed))
         return _corsify_actual_response(jsonify({ "data": list(revealed), "status": "success" }))
@@ -159,13 +164,17 @@ def calculate_user_move():
         move = (int(r), int(c))
 
         if (game.is_mine(move)):
+            revealed.add(move)
             time.sleep(0.2)
-            return _corsify_actual_response(jsonify({ "data": None, "status": "failed" }))
+            return _corsify_actual_response(jsonify({ "data": None, "status": "lost" }))
 
         ai.add_knowledge(move, game.nearby_mines(move))
         reveal_cell(move)
 
         time.sleep(0.2)
+        if (len(revealed) == (game.height * game.width - len(game.mines))):
+            return _corsify_actual_response(jsonify({ "data": list(revealed), "status": "won" }))
+
         return _corsify_actual_response(jsonify({ "data": list(revealed), "status": "success" }))
 
 def _build_cors_preflight_response():
@@ -178,7 +187,6 @@ def _build_cors_preflight_response():
 def _corsify_actual_response(response):
     response.headers.add("Access-Control-Allow-Origin", "*")
     return response
-
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
