@@ -145,7 +145,6 @@ def calculate_ai_move():
             print("Ai making safe move: ", move)
             ai.add_knowledge(move, game.nearby_mines(move))
             reveal_cell(move)
-            move_type = "safe"
 
         time.sleep(0.2)
         if (len(revealed) == (game.height * game.width - len(game.mines))):
@@ -164,7 +163,7 @@ def calculate_user_move():
         move = (int(r), int(c))
 
         if (game.is_mine(move)):
-            revealed.add(move)
+            reveal_cell(move)
             time.sleep(0.2)
             return _corsify_actual_response(jsonify({ "data": None, "status": "lost" }))
 
