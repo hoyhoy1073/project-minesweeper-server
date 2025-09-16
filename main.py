@@ -35,6 +35,10 @@ def reveal_cell(cell):
 
     reveal_cells(cell[0], cell[1])
 
+@app.route('/api')
+def default():
+    print("Hello.")
+
 @app.route('/api/setup-board')
 def setup_board():
     if request.method == "OPTIONS":
@@ -54,8 +58,6 @@ def setup_board():
         height = int(request.args.get("height"))
         width = int(request.args.get("width"))
         mines = eval(request.args.get("mines"))
-
-        print("Mines: ", mines)
 
         HEIGHT = height
         WIDTH = width
@@ -126,11 +128,11 @@ def calculate_ai_move():
             move = ai.make_random_move(game.mines)
             if move == None:
                 # The AI couldn't make a safe move nor a random move
-                print("No moves left to make.")
+                # print("No moves left to make.")
                 flags = ai.mines.copy()
             else:
                 # The AI has made a random move
-                print("Ai making random move: ", move)
+                # print("Ai making random move: ", move)
                 ai.add_knowledge(move, game.nearby_mines(move))
                 reveal_cell(move)
         else:
@@ -140,7 +142,7 @@ def calculate_ai_move():
                 return _corsify_actual_response(jsonify({ "data": list(game.mines), "status": "lost" }))           
 
             # The AI has made a random move
-            print("Ai making safe move: ", move)
+            # print("Ai making safe move: ", move)
             ai.add_knowledge(move, game.nearby_mines(move))
             reveal_cell(move)
 
@@ -148,7 +150,6 @@ def calculate_ai_move():
         if (len(revealed) == (game.height * game.width - len(game.mines))):
             return _corsify_actual_response(jsonify({ "data": list(revealed.union(game.mines)), "status": "won" }))
         
-        print("These cells are revealed: ", list(revealed))
         return _corsify_actual_response(jsonify({ "data": list(revealed), "status": "success" }))
 
 
