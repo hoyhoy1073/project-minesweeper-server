@@ -20,10 +20,10 @@ def reveal_cell(cell):
     if (cell in revealed or cell in flags):
         return
     if (game.is_mine(cell)):
-        for i in range(game.height):
-            for j in range(game.width):
-                if (game.is_mine((i, j))):
-                    revealed.add((i, j))
+        # for i in range(game.height):
+        #     for j in range(game.width):
+        #         if (game.is_mine((i, j))):
+        #             revealed.add((i, j))
         lost = True
         return
     def reveal_cells(r: int, c: int):
@@ -58,6 +58,9 @@ def setup_board():
         height = int(request.args.get("height"))
         width = int(request.args.get("width"))
         mines = eval(request.args.get("mines"))
+
+        print("Mines: ", mines)
+
         HEIGHT = height
         WIDTH = width
 
@@ -134,12 +137,12 @@ def calculate_ai_move():
                 print("Ai making random move: ", move)
                 ai.add_knowledge(move, game.nearby_mines(move))
                 reveal_cell(move)
-                move_type = "random"
         else:
             if (game.is_mine(move)):
                 reveal_cell(move)
                 time.sleep(0.2)
-                return _corsify_actual_response(jsonify({ "data": list(revealed), "status": "lost" }))                
+                # return _corsify_actual_response(jsonify({ "data": list(revealed), "status": "lost" }))       
+                return _corsify_actual_response(jsonify({ "data": list(game.mines), "status": "lost" }))           
 
             # The AI has made a random move
             print("Ai making safe move: ", move)
@@ -148,7 +151,8 @@ def calculate_ai_move():
 
         time.sleep(0.2)
         if (len(revealed) == (game.height * game.width - len(game.mines))):
-            return _corsify_actual_response(jsonify({ "data": list(revealed), "status": "won" }))
+            # return _corsify_actual_response(jsonify({ "data": list(revealed), "status": "won" }))
+            return _corsify_actual_response(jsonify({ "data": list(revealed.union(game.mines)), "status": "won" }))
         
         print("These cells are revealed: ", list(revealed))
         return _corsify_actual_response(jsonify({ "data": list(revealed), "status": "success" }))
@@ -165,14 +169,16 @@ def calculate_user_move():
         if (game.is_mine(move)):
             reveal_cell(move)
             time.sleep(0.2)
-            return _corsify_actual_response(jsonify({ "data": list(revealed), "status": "lost" }))
+            # return _corsify_actual_response(jsonify({ "data": list(revealed), "status": "lost" }))
+            return _corsify_actual_response(jsonify({ "data": list(game.mines), "status": "lost" }))  
 
         ai.add_knowledge(move, game.nearby_mines(move))
         reveal_cell(move)
 
         time.sleep(0.2)
         if (len(revealed) == (game.height * game.width - len(game.mines))):
-            return _corsify_actual_response(jsonify({ "data": list(revealed), "status": "won" }))
+            # return _corsify_actual_response(jsonify({ "data": list(revealed), "status": "won" }))
+            return _corsify_actual_response(jsonify({ "data": list(revealed.union(game.mines)), "status": "won" }))
 
         return _corsify_actual_response(jsonify({ "data": list(revealed), "status": "success" }))
 
