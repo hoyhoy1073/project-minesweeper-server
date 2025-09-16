@@ -22,7 +22,7 @@ def reveal_cell(cell):
     if (game.is_mine(cell)):
         for i in range(game.height):
             for j in range(game.width):
-                if (game.is_mine):
+                if (game.is_mine((i, j))):
                     revealed.add((i, j))
         lost = True
         return
@@ -139,7 +139,7 @@ def calculate_ai_move():
             if (game.is_mine(move)):
                 reveal_cell(move)
                 time.sleep(0.2)
-                return _corsify_actual_response(jsonify({ "data": None, "status": "lost" }))                
+                return _corsify_actual_response(jsonify({ "data": list(revealed), "status": "lost" }))                
 
             # The AI has made a random move
             print("Ai making safe move: ", move)
@@ -165,7 +165,7 @@ def calculate_user_move():
         if (game.is_mine(move)):
             reveal_cell(move)
             time.sleep(0.2)
-            return _corsify_actual_response(jsonify({ "data": None, "status": "lost" }))
+            return _corsify_actual_response(jsonify({ "data": list(revealed), "status": "lost" }))
 
         ai.add_knowledge(move, game.nearby_mines(move))
         reveal_cell(move)
