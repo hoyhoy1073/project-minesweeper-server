@@ -35,9 +35,9 @@ def reveal_cell(cell):
 
     reveal_cells(cell[0], cell[1])
 
-@app.route('/api')
-def default():
-    print("Hello.")
+@app.route("/")
+def default_route():
+    return "Hello."
 
 @app.route('/api/setup-board')
 def setup_board():
