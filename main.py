@@ -1,10 +1,16 @@
 from flask import Flask,  request, jsonify, make_response
 from minesweeper import Minesweeper, MinesweeperAI
+from dotenv import load_dotenv
 from flask_cors import CORS
 import time
+import os
+
+load_dotenv()
+client_url = os.getenv("CLIENT_URL") if os.getenv("PRODUCTION_MODE") == "True" else "*"
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+# CORS(app, resources={r"/api/*": {"origins": "*"}})
+CORS(app, resources={r"/api/*": {"origins": client_url}})
 
 HEIGHT = None
 WIDTH = None
@@ -177,13 +183,13 @@ def calculate_user_move():
 
 def _build_cors_preflight_response():
     response = make_response()
-    response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add("Access-Control-Allow-Origin", client_url)
     response.headers.add('Access-Control-Allow-Headers', "*")
     response.headers.add('Access-Control-Allow-Methods', "*")
     return response
 
 def _corsify_actual_response(response):
-    response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add("Access-Control-Allow-Origin", client_url)
     return response
 
 if __name__ == '__main__':
