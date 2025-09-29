@@ -232,18 +232,19 @@ class MinesweeperAI():
             else:
                 self.knowledge.append(sentence)   
 
-        # assert((cell == (-1, -1)))
-
         q = queue.Queue()
         processed = set()
         knowledge = self.knowledge.copy()
+
+        # Create a sentence based with the cell's neighbors
         neighbors = self.calculate_neighbors(cell)
         sentence_A = self.create_sentence(neighbors, count)
-        q.put((cell, 0))
         handleBaseCases(sentence_A)
+        # This cell was clicked on and the game did not end, so it's a known safe cell
+        # and we add it to the queue to update other cells.
+        q.put((cell, 0))
 
         # Infer new shorter sentences that is a subset of the new sentence
-        # Bases case 3: If a sentence's number of cells is 1, then we can conclue the state of that cell
         for sentence_B in knowledge:
             if sentence_B.cells.issubset(sentence_A.cells):
                 cells_C = sentence_A.cells - sentence_B.cells
@@ -287,6 +288,7 @@ class MinesweeperAI():
                         elif (len(cells) > 0):
                             knowledge_set.add((repr(cells), sentence.count))
 
+            # Rebuilding the Ai's knowledge
             for cell_strs, count in knowledge_set:
                 new_knowledge.append(Sentence(eval(cell_strs), count))
 
@@ -311,7 +313,7 @@ class MinesweeperAI():
 
         return neighbors
 
-    # Create a new sentence with the cell, its neighbors, and how many of them are mines
+    # Create a new sentence with the cell's neighbors, and how many of them are mines
     def create_sentence(self, cells, count):
         newCells = set()
         for cell in cells:
@@ -332,33 +334,6 @@ class MinesweeperAI():
         This function may use the knowledge in self.mines, self.safes
         and self.moves_made, but should not modify any of those values.
         """
-        move = None
-
-        # for safe_move in self.safes:
-        #     if (safe_move not in self.moves_made):
-        #         move = safe_move
-        #         break
-        
-        # return move
-
-        # available_moves = []
-        # for i in range(self.height):
-        #     for j in range(self.width):
-        #         # move = (i, j)
-        #         # neighbors = self.calculate_neighbors(move)
-        #         # for cell in neighbors:
-        #         #     if cell in self.safes or cell not in mines:
-        #         #         available_moves.append(move)
-        #         move = (i, j)
-        #         if (move in self.safes):
-        #             avaible
-
-        # random_move = random.sample(available_moves, 1)
-        # if (len(random_move) > 0):
-        #     return random_move[0]
-
-        # return None
-
         available_moves = []
         for safe_move in self.safes:
             if (safe_move not in self.moves_made):
@@ -377,31 +352,8 @@ class MinesweeperAI():
         Should choose randomly among cells that:
             1) have not already been chosen, and
             2) are not known to be mines
+        Return a cell with the largest Manhattan distance from cells that are known mines and are already clicked on
         """
-        # for mine in self.mines:
-        #     calculate_manhattan_distances(mine, distances)
-
-        # if (len(distances) > 0):
-        #     move = calculate_farthest_possible_move(distances)
-        #     self.moves_made.add(move)
-        #     return move
-        
-        # for cell in self.moves_made:
-        #     calculate_manhattan_distances(cell, distances)
-
-        # if (len(distances) > 0):
-        #     move = calculate_farthest_possible_move(distances)
-        #     self.moves_made.add(move)
-        #     return move
-
-        # for cell in mines:
-        #     calculate_manhattan_distances(cell, distances)
-
-        # if (len(distances) > 0):
-        #     move = calculate_farthest_possible_move(distances)
-        #     self.moves_made.add(move)
-        #     return move
-
         def calculate_manhattan_distances():
             distances = []
             heapq.heapify(distances)
